@@ -1,7 +1,8 @@
 import asyncio
 
 from agents import set_default_openai_api, set_default_openai_client, set_tracing_disabled
-from openai import AsyncAzureOpenAI
+#from openai import AsyncAzureOpenAI
+from openai import AsyncOpenAI
 
 from analyse import analyse
 from database import program_sample, update
