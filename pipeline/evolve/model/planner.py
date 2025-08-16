@@ -73,6 +73,6 @@ planner = Agent(
 - **motivation**: Clear explanation of WHAT you implemented and WHY
 - **code**: MUST be saved using write_code_file tool - no code in response""",
     output_type=PlannerOutput,
-    model='o3',
+    model='gpt-5',
     tools=[read_code_file, write_code_file]
 )
