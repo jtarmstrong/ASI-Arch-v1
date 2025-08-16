@@ -1,3 +1,5 @@
+import os
+
 class Config:
     """Configuration settings for the experiment."""
     # Target file
@@ -22,8 +24,12 @@ class Config:
     # Maximum number of retry attempts
     MAX_RETRY_ATTEMPTS: int = 10
     
-    # RAG service URL
-    RAG: str = "your rag url"
+    # RAG service URL (OpenSearch)
+    RAG: str = os.getenv("OPENSEARCH_URL", "http://localhost:9200")
     
-    # Database URL
-    DATABASE: str = "your database url"
+    # Database URL (MongoDB)
+    DATABASE: str = os.getenv("MONGODB_URI", "mongodb://admin:password123@localhost:27018/myapp")
+    
+    # Additional service URLs for your infrastructure
+    MONGO_EXPRESS_URL: str = "http://localhost:8081"
+    OPENSEARCH_DASHBOARDS_URL: str = "http://localhost:5601"
