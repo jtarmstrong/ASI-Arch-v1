@@ -86,6 +86,6 @@ When you identify problems, you MUST:
 Remember: Your goal is to ensure correctness while encouraging innovation. Fix technical issues, not creative choices.""",
     
     output_type=CodeCheckerOutput,
-    model='o3',
+    model='gpt-5',
     tools=[read_code_file, write_code_file]
 )
