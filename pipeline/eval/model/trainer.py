@@ -20,5 +20,5 @@ trainer = Agent(
     Your error explanation should be helpful for debugging and fixing the issue.""",
     tools=[run_training_script],
     output_type=TrainingResultOutput,
-    model="gpt-4.1"
+    model="gpt-5"
 )
