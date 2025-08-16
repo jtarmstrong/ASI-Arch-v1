@@ -52,5 +52,5 @@ Analyze a given motivation statement against a collection of previously recorded
     """,
     output_type=MotivationCheckOutput,
     tools=[],
-    model='gpt-4.1',
+    model='gpt-5',
 )
