@@ -111,6 +111,6 @@ deduplication = Agent(
 - **Breakthrough Potential**: Create code with clear pathways to significant performance improvements through novel mechanisms""",
     
     output_type=DeduplicationOutput,
-    model='o3',
+    model='gpt-5',
     tools=[read_code_file, write_code_file]
 )
