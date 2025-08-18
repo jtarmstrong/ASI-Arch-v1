@@ -10,7 +10,7 @@ from eval import evaluation
 from evolve import evolve
 from utils.agent_logger import end_pipeline, log_error, log_info, log_step, log_warning, start_pipeline
 
-client = AsyncAzureOpenAI()
+client = AsyncOpenAI()
 
 set_default_openai_client(client)
 set_default_openai_api("chat_completions") 
