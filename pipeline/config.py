@@ -6,7 +6,7 @@ class Config:
     SOURCE_FILE: str = "evolve file"
     
     # Training script
-    BASH_SCRIPT: str = "your training script"
+    BASH_SCRIPT: str = "bash scripts/train.sh"
     
     # Experiment results
     RESULT_FILE: str = "./files/analysis/loss.csv"
