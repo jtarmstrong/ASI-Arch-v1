@@ -97,9 +97,12 @@ def run_plot_script(script_path: str) -> Dict[str, Any]:
             'error': e.stderr
         }
 
-def get_all_tools():
+
+async def get_all_tools(*args, **kwargs):
     """Returns all available tools for agents"""
     return [read_code_file, write_code_file]
+
+
 
 def run_rag(query: str) -> Dict[str, Any]:
     """Run RAG and return the results."""
