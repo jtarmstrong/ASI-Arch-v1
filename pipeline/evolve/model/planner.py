@@ -1,6 +1,6 @@
 from agents import Agent
 from pydantic import BaseModel
-from tools import read_code_file, write_code_file
+from tools import read_code_file, write_code_file, get_all_tools
 
 class PlannerOutput(BaseModel):
     name: str
@@ -76,3 +76,24 @@ planner = Agent(
     model='gpt-5',
     tools=[read_code_file, write_code_file]
 )
+
+# Handoffs for agent framework compatibility
+handoffs = []
+output_type = PlannerOutput
+tools = [read_code_file, write_code_file]
+model = "gpt-5"
+name = "Architecture Designer"
+instructions = planner.instructions
+model_settings = planner.model_settings
+input_guardrails = planner.input_guardrails
+output_guardrails = planner.output_guardrails
+hooks = planner.hooks
+handoff_description = planner.handoff_description
+mcp_config = planner.mcp_config
+mcp_servers = planner.mcp_servers
+reset_tool_choice = planner.reset_tool_choice
+tool_use_behavior = planner.tool_use_behavior
+as_tool = planner.as_tool
+clone = planner.clone
+get_mcp_tools = planner.get_mcp_tools
+get_system_prompt = planner.get_system_prompt
