@@ -114,3 +114,7 @@ deduplication = Agent(
     model='gpt-5',
     tools=[read_code_file, write_code_file]
 )
+handoffs = []
+from .deduplication import DeduplicationOutput
+output_type = DeduplicationOutput
+async def get_all_tools(*args, **kwargs): return []
