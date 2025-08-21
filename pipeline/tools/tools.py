@@ -21,21 +21,36 @@ def clean_generated_code(content: str) -> str:
         if stripped.startswith('```'):
             continue
             
-        # Skip standalone language identifiers (like "python")
-        if stripped == 'python' and i < 5:  # Only check first few lines
+        # Skip standalone language identifiers (like "python", "py", etc.)
+        if stripped.lower() in ['python', 'py'] and i < 10:  # Check more lines, case insensitive
             continue
             
         # Skip empty lines at the beginning
         if not stripped and not cleaned_lines:
             continue
-            
-        cleaned_lines.append(line)
+        
+        # Clean markdown formatting from the line
+        cleaned_line = clean_markdown_formatting(line)
+        cleaned_lines.append(cleaned_line)
     
     # Ensure we don't have trailing empty lines
     while cleaned_lines and not cleaned_lines[-1].strip():
         cleaned_lines.pop()
     
     return '\n'.join(cleaned_lines)
+
+def clean_markdown_formatting(text: str) -> str:
+    """Remove markdown bold, italic, and other formatting from a line."""
+    # Remove markdown bold (**text**)
+    text = re.sub(r'\*\*(.*?)\*\*', r'\1', text)
+    
+    # Remove markdown italic (*text*)
+    text = re.sub(r'\*(.*?)\*', r'\1', text)
+    
+    # Remove any stray markdown asterisks that might be left
+    text = re.sub(r'(?<!\w)\*(?!\w)', '', text)
+    
+    return text
 
 @function_tool
 def read_code_file() -> Dict[str, Any]:
@@ -74,7 +89,11 @@ def read_csv_file(file_path: str) -> Dict[str, Any]:
 def write_code_file(content: str, program_name: str = None) -> Dict[str, Any]:
     """Write content to a code file."""
     if program_name:
-        source_file = f"programs/{program_name}.py"
+        # Handle potential double .py extension
+        if program_name.endswith('.py'):
+            source_file = f"programs/{program_name}"
+        else:
+            source_file = f"programs/{program_name}.py"
     else:
         source_file = Config.SOURCE_FILE
     
@@ -291,6 +310,27 @@ def extract_error_details(error_text: str) -> Dict[str, Any]:
 # FILE MANAGEMENT
 
 @function_tool
+def fix_double_extensions() -> Dict[str, Any]:
+    """Fix files with double .py.py extensions."""
+    try:
+        programs_dir = Path("programs")
+        fixed_files = []
+        
+        for py_file in programs_dir.glob("*.py.py"):
+            # Rename to single .py extension
+            new_name = py_file.with_suffix('')  # Remove the last .py
+            py_file.rename(new_name)
+            fixed_files.append(f"{py_file.name} -> {new_name.name}")
+        
+        return {
+            'success': True,
+            'fixed_files': fixed_files,
+            'count': len(fixed_files)
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
+
+@function_tool
 def list_generated_programs() -> Dict[str, Any]:
     """List all generated programs with metadata."""
     try:
@@ -345,6 +385,30 @@ def cleanup_failed_programs(older_than_hours: int = 24) -> Dict[str, Any]:
         return {'success': False, 'error': str(e)}
 
 # CONTENT INSPECTION
+
+@function_tool
+def test_content_cleaning(file_path: str = "programs/generated_program.py") -> Dict[str, Any]:
+    """Test content cleaning on a specific file without modifying it."""
+    try:
+        with open(file_path, 'r') as f:
+            original_content = f.read()
+        
+        cleaned_content = clean_generated_code(original_content)
+        
+        # Show first 10 lines of each
+        orig_lines = original_content.split('\n')[:10]
+        clean_lines = cleaned_content.split('\n')[:10]
+        
+        return {
+            'success': True,
+            'original_first_10': orig_lines,
+            'cleaned_first_10': clean_lines,
+            'cleaning_removed_lines': len(orig_lines) - len(clean_lines),
+            'future_import_line_original': next((i+1 for i, line in enumerate(orig_lines) if '__future__' in line), None),
+            'future_import_line_cleaned': next((i+1 for i, line in enumerate(clean_lines) if '__future__' in line), None)
+        }
+    except Exception as e:
+        return {'success': False, 'error': str(e)}
 
 @function_tool
 def preview_file_structure(file_path: str, lines: int = 20) -> Dict[str, Any]:
@@ -427,7 +491,8 @@ async def get_all_tools(*args, **kwargs):
         # File management
         list_generated_programs,
         cleanup_failed_programs,
-        preview_file_structure
+        preview_file_structure,
+        fix_double_extensions
     ]
 
 def run_rag(query: str) -> Dict[str, Any]:
