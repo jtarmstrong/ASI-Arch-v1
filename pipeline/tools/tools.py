@@ -5,22 +5,49 @@ from agents import function_tool
 from config import Config
 
 
+#OLD
+#def read_code_file() -> Dict[str, Any]:
+#    """Read a code file and return its contents."""
+#    source_file = Config.SOURCE_FILE
+#    try:
+#        with open(source_file, 'r') as f:
+#            content = f.read()
+#        return {
+#            'success': True,
+#            'content': content
+#        }
+#    except Exception as e:
+#        return {
+#            'success': False,
+#            'error': str(e)
+#        }
+
 @function_tool
-def read_code_file() -> Dict[str, Any]:
-    """Read a code file and return its contents."""
-    source_file = Config.SOURCE_FILE
+def write_code_file(content: str, program_name: str = None) -> Dict[str, Any]:
+    """Write content to a code file."""
+    if program_name:
+        source_file = f"programs/{program_name}.py"
+    else:
+        source_file = Config.SOURCE_FILE
+    
     try:
-        with open(source_file, 'r') as f:
-            content = f.read()
+        # Ensure programs directory exists
+        os.makedirs(os.path.dirname(source_file), exist_ok=True)
+        
+        with open(source_file, 'w') as f:
+            f.write(content)
         return {
             'success': True,
-            'content': content
+            'message': f'Successfully wrote to {source_file}'
         }
     except Exception as e:
         return {
             'success': False,
             'error': str(e)
         }
+
+
+
 
 
 @function_tool
