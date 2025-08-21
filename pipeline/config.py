@@ -3,7 +3,7 @@ import os
 class Config:
     """Configuration settings for the experiment."""
     # Target file
-    SOURCE_FILE: str = "evolve file"
+    SOURCE_FILE: str = "programs/generated_program.py"
     
     # Training script
     BASH_SCRIPT: str = "bash scripts/train.sh"
