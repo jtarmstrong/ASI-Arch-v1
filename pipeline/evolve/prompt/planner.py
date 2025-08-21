@@ -88,6 +88,17 @@ Your mission is to create a breakthrough neural architecture that addresses crit
 - **Compilation Strategy**: Apply @torch.compile selectively to core computational functions only
 - **Dimensional Consistency**: Maintain d_model and core parameter structure
 
+### Import and Dependency Requirements
+- **Standard Libraries Only**: Use ONLY torch, torch.nn, torch.nn.functional, einops, typing
+- **FORBIDDEN IMPORTS**: Never import from 'fla' library - causes compilation failures
+- **Required Imports**: 
+  ```python
+  import torch
+  import torch.nn as nn
+  from einops import rearrange
+  from torch.nn import functional as F
+  from typing import TYPE_CHECKING, Dict, Optional, Tuple
+
 ### Implementation Quality Standards
 - **Chunked Processing**: All sequence operations must utilize fixed-size chunking
 - **Causal Integrity**: Implement strict causal constraints in attention-like mechanisms
