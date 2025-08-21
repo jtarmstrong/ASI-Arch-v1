@@ -1,13 +1,10 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING, Dict, Optional, Tuple
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from einops import rearrange
-from typing import TYPE_CHECKING, Dict, Optional, Tuple
-
-# Minimal FLA replacements to avoid Triton issues
+# Working FLA replacements (no Triton dependencies)
 def get_unpad_data(attention_mask):
-    """Minimal replacement for FLA get_unpad_data"""
     seqlens_in_batch = attention_mask.sum(dim=-1, dtype=torch.int32)
     indices = torch.nonzero(attention_mask.flatten(), as_tuple=False).flatten()
     max_seqlen_in_batch = seqlens_in_batch.max().item()
@@ -15,23 +12,19 @@ def get_unpad_data(attention_mask):
     return indices, cu_seqlens, max_seqlen_in_batch
 
 def index_first_axis(input, indices):
-    """Minimal replacement for FLA index_first_axis"""
     return input[indices]
 
 def pad_input(hidden_states, indices, batch_size, seq_len):
-    """Minimal replacement for FLA pad_input"""
     output = torch.zeros(batch_size, seq_len, *hidden_states.shape[1:], 
                         dtype=hidden_states.dtype, device=hidden_states.device)
     output.view(-1, *hidden_states.shape[1:])[indices] = hidden_states
     return output
 
 class RMSNorm(nn.Module):
-    """Minimal RMSNorm implementation"""
     def __init__(self, hidden_size, eps=1e-6):
         super().__init__()
         self.weight = nn.Parameter(torch.ones(hidden_size))
         self.eps = eps
-
     def forward(self, hidden_states):
         input_dtype = hidden_states.dtype
         hidden_states = hidden_states.to(torch.float32)
@@ -40,11 +33,9 @@ class RMSNorm(nn.Module):
         return self.weight * hidden_states.to(input_dtype)
 
 class FusedRMSNormGated(nn.Module):
-    """Minimal FusedRMSNormGated implementation"""
     def __init__(self, hidden_size, eps=1e-6):
         super().__init__()
         self.norm = RMSNorm(hidden_size, eps)
-        
     def forward(self, hidden_states, gate=None):
         normed = self.norm(hidden_states)
         if gate is not None:
@@ -52,48 +43,23 @@ class FusedRMSNormGated(nn.Module):
         return normed
 
 class ShortConvolution(nn.Module):
-    """Minimal ShortConvolution implementation"""
     def __init__(self, hidden_size, kernel_size=4, activation=None):
         super().__init__()
-        self.conv1d = nn.Conv1d(
-            hidden_size, hidden_size, 
-            kernel_size=kernel_size,
-            padding=kernel_size - 1,
-            groups=hidden_size
-        )
+        self.conv1d = nn.Conv1d(hidden_size, hidden_size, kernel_size=kernel_size, padding=kernel_size-1, groups=hidden_size)
         self.activation = activation
-        
     def forward(self, x, cache=None, output_final_state=False, cu_seqlens=None):
-        # x shape: (batch, seq_len, hidden_size)
-        if len(x.shape) == 3:
-            batch, seq_len, hidden = x.shape
-            x_conv = x.transpose(1, 2)  # (batch, hidden, seq_len)
-            out = self.conv1d(x_conv)
-            out = out[:, :, :seq_len]  # Remove padding
-            out = out.transpose(1, 2)  # Back to (batch, seq_len, hidden)
-        else:
-            # Handle other shapes
-            original_shape = x.shape
-            x_flat = x.view(-1, x.shape[-2], x.shape[-1])
-            batch, seq_len, hidden = x_flat.shape
-            x_conv = x_flat.transpose(1, 2)
-            out = self.conv1d(x_conv)
-            out = out[:, :, :seq_len]
-            out = out.transpose(1, 2)
-            out = out.view(original_shape)
-            
+        batch, seq_len, hidden = x.shape
+        x_conv = x.transpose(1, 2)
+        out = self.conv1d(x_conv)
+        out = out[:, :, :seq_len].transpose(1, 2)
         if self.activation == 'silu':
             out = F.silu(out)
-            
-        new_cache = None  # Simplified - no caching
-        # Always return tuple for compatibility
-        return out, new_cache
+        return out, None
 
 def l2norm(x, dim=-1, eps=1e-8):
-    """L2 normalization"""
     return x / (torch.norm(x, dim=dim, keepdim=True) + eps)
 
-
+from torch.nn import functional as F
 def softmax(x):
     return F.softmax(x, dim=-1)
 
@@ -146,8 +112,7 @@ def delta_rule_chunkwise(q, k, v, beta, chunk_size=32):
 
 if TYPE_CHECKING:
     from transformers.processing_utils import Unpack
-    from fla.models.utils import Cache
-
+    
 def elu_p1(x):
     return (F.elu(x, 1., False) + 1.).to(x)
 
@@ -250,8 +215,7 @@ class DeltaNet(nn.Module):
             )
         batch_size, q_len, _ = hidden_states.shape
         last_state = None
-        # Guard against None layer_idx to avoid TypeError in comparison
-        if past_key_values is not None and (self.layer_idx is not None) and len(past_key_values) > self.layer_idx:
+        if past_key_values is not None and len(past_key_values) > self.layer_idx:
             last_state = past_key_values[self.layer_idx]
         cu_seqlens = kwargs.get('cu_seqlens', None)
         if attention_mask is not None:
