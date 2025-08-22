@@ -43,7 +43,7 @@ gated_delta_net,0.168,0.374,0.370,0.000,0.282,0.002,0.144,0.562,0.350,0.004,0.00
 ### Model Name: {element.name}
 
 ### Architecture Details:
-'''python
+'''
 {element.program}
 '''
 
