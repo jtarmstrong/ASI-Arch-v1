@@ -7,7 +7,7 @@ from typing import Any, Dict
 from datetime import datetime
 from pathlib import Path
 from agents import function_tool
-from config import Config
+from pipeline.config import Config
 
 def clean_generated_code(content: str) -> str:
     """Remove markdown artifacts and ensure proper Python file structure."""
