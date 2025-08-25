@@ -7,7 +7,7 @@ from typing import Any, Dict
 from datetime import datetime
 from pathlib import Path
 from agents import function_tool
-from pipeline.config import Config
+from config import Config
 
 def clean_generated_code(content: str) -> str:
     """Remove markdown artifacts and ensure proper Python file structure."""
@@ -31,6 +31,16 @@ def clean_generated_code(content: str) -> str:
         
         # Clean markdown formatting from the line
         cleaned_line = clean_markdown_formatting(line)
+        
+        # Fix malformed future imports
+        cleaned_line = fix_future_imports(cleaned_line)
+        
+        # Fix encoding declarations
+        cleaned_line = fix_encoding_declaration(cleaned_line)
+        
+        # Fix missing operators
+        cleaned_line = fix_missing_operators(cleaned_line)
+        
         cleaned_lines.append(cleaned_line)
     
     # Ensure we don't have trailing empty lines
@@ -38,6 +48,47 @@ def clean_generated_code(content: str) -> str:
         cleaned_lines.pop()
     
     return '\n'.join(cleaned_lines)
+
+def fix_missing_operators(line: str) -> str:
+    """Fix missing operators in mathematical expressions."""
+    # Fix missing multiplication operator - variable followed by bracket/identifier
+    # v = v   beta[..., None] -> v = v * beta[..., None]
+    line = re.sub(r'(\w)\s{2,}(\w+\[)', r'\1 * \2', line)
+    
+    # Also handle cases like: tensor   other_tensor
+    line = re.sub(r'(\w)\s{2,}(\w+)(?=\s*[,\)\]\n]|$)', r'\1 * \2', line)
+    
+    # Fix missing multiplication with parentheses: expr   (something)
+    line = re.sub(r'(\w)\s{2,}(\()', r'\1 * \2', line)
+    
+    return line
+
+def fix_encoding_declaration(line: str) -> str:
+    """Fix malformed encoding declarations."""
+    # Fix -- style encoding to -*- style
+    if re.match(r'#\s*--\s*coding[:=]\s*utf-8\s*--', line):
+        return '# -*- coding: utf-8 -*-'
+    
+    # Also handle other common malformations
+    if re.match(r'#\s*coding[:=]\s*utf-8', line) and '-*-' not in line:
+        return '# -*- coding: utf-8 -*-'
+        
+    return line
+
+def fix_future_imports(line: str) -> str:
+    """Fix malformed future import statements."""
+    # Fix markdown bold asterisks in future imports (most common issue)
+    line = re.sub(r'from\s+\*\*future\*\*\s+import', 'from __future__ import', line)
+    
+    # Fix missing double underscores in future imports
+    line = re.sub(r'from\s+future\s+import', 'from __future__ import', line)
+    
+    # Also handle other common future import malformations
+    line = re.sub(r'from\s+_future_\s+import', 'from __future__ import', line)
+    line = re.sub(r'from\s+__future\s+import', 'from __future__ import', line)
+    line = re.sub(r'from\s+future__\s+import', 'from __future__ import', line)
+    
+    return line
 
 def clean_markdown_formatting(text: str) -> str:
     """Remove markdown bold, italic, and other formatting from a line."""
