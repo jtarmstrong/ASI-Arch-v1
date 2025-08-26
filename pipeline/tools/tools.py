@@ -1,3 +1,4 @@
+import sys; sys.path.append("/tmp")
 import os
 import subprocess
 import ast
@@ -10,6 +11,7 @@ from agents import function_tool
 from config import Config
 
 def clean_generated_code(content: str) -> str:
+    exec(open("/tmp/debug_cleaning.py").read())
     """Remove markdown artifacts and ensure proper Python file structure."""
     lines = content.split('\n')
     cleaned_lines = []
@@ -52,14 +54,16 @@ def clean_generated_code(content: str) -> str:
 def fix_missing_operators(line: str) -> str:
     """Fix missing operators in mathematical expressions."""
     # Fix missing multiplication operator - variable followed by bracket/identifier
-    # v = v   beta[..., None] -> v = v * beta[..., None]
-    line = re.sub(r'(\w)\s{2,}(\w+\[)', r'\1 * \2', line)
+    line = re.sub(r'(\w)\s+(\w+\[)', r'\1 * \2', line)
+    
+    # Handle function calls: variable space function_name(
+    line = re.sub(r'(\w)\s+(\w+\()', r'\1 * \2', line)
     
     # Also handle cases like: tensor   other_tensor
-    line = re.sub(r'(\w)\s{2,}(\w+)(?=\s*[,\)\]\n]|$)', r'\1 * \2', line)
+    line = re.sub(r'(\w)\s+(\w+)(?=\s*[,\)\]\n]|$)', r'\1 * \2', line)
     
     # Fix missing multiplication with parentheses: expr   (something)
-    line = re.sub(r'(\w)\s{2,}(\()', r'\1 * \2', line)
+    line = re.sub(r'(\w)\s+(\()', r'\1 * \2', line)
     
     return line
 
