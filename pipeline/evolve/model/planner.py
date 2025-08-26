@@ -17,6 +17,14 @@ planner = Agent(
 2. Design and implement concrete code changes using write_code_file
 3. Only then provide the motivation explaining your implementation
 
+## DEPENDENCY CONSTRAINTS - MANDATORY:
+**ONLY use standard PyTorch components. NO external research libraries.**
+- **ALLOWED imports**: torch, torch.nn, torch.nn.functional, typing, einops, math, warnings
+- **FORBIDDEN imports**: fla, flash_attn, triton, transformers, timm, or ANY research library
+- **Self-contained implementations**: Write custom functions instead of importing research libs
+- **Standard PyTorch only**: Use nn.Linear, nn.LayerNorm, nn.RMSNorm, nn.Conv1d, nn.MultiheadAttention, etc.
+- **Custom utilities**: Implement your own versions of specialized functions using basic PyTorch ops
+
 ## Core Objectives
 1. READ existing code using read_code_file tool
 2. IMPLEMENT architectural modifications using write_code_file tool
