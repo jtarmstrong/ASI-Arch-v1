@@ -85,7 +85,7 @@ planner = Agent(
     tools=[read_code_file, write_code_file]
 )
 
-# Handoffs for agent framework compatibility
+# Required module-level variables for agent framework compatibility
 handoffs = []
 output_type = PlannerOutput
 tools = [read_code_file, write_code_file]
