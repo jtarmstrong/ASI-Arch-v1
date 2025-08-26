@@ -10,7 +10,7 @@ if [ -z "$PROGRAM_NAME" ]; then
     exit 1
 fi
 
-PROGRAM_FILE="programs/generated_program.py"
+PROGRAM_FILE="programs/${PROGRAM_NAME}.py"
 if [ ! -f "$PROGRAM_FILE" ]; then
     echo "Error: Program file not found: $PROGRAM_FILE" > "$DEBUG_DIR/training_error.txt"
     exit 1
