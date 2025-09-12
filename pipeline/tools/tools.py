@@ -11,7 +11,7 @@ from agents import function_tool
 from config import Config
 
 def clean_generated_code(content: str) -> str:
-    exec(open("/tmp/debug_cleaning.py").read())
+  #  exec(open("/tmp/debug_cleaning.py").read())
     """Remove markdown artifacts and ensure proper Python file structure."""
     lines = content.split('\n')
     cleaned_lines = []
@@ -571,6 +571,54 @@ def run_rag(query: str) -> Dict[str, Any]:
         return {
             'success': True,
             'results': results
+        }
+        
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)
+        }
+
+@function_tool
+def validate_planner_output(program_name: str) -> Dict[str, Any]:
+    """Validate that planner actually created the expected file."""
+    try:
+        expected_file = f"../programs/{program_name}.py"
+        
+        if not os.path.exists(expected_file):
+            return {
+                'success': False,
+                'error': f'Planner failed to create file: {expected_file}',
+                'action_required': 'Planner must call write_code_file'
+            }
+        
+        # Check file was created recently (within last 10 minutes)
+        file_age = datetime.now().timestamp() - os.path.getmtime(expected_file)
+        if file_age > 600:  # 10 minutes
+            return {
+                'success': False,
+                'error': f'File {expected_file} is too old (created {file_age/60:.1f} minutes ago)',
+                'action_required': 'Planner must create new implementation'
+            }
+        
+        # Basic syntax check
+        with open(expected_file) as f:
+            content = f.read()
+        
+        try:
+            ast.parse(content)
+        except SyntaxError as e:
+            return {
+                'success': False,
+                'error': f'Generated file has syntax errors: {e}',
+                'action_required': 'Planner must fix implementation'
+            }
+        
+        return {
+            'success': True,
+            'message': f'File {expected_file} created successfully and validated',
+            'file_size': len(content),
+            'lines': len(content.splitlines())
         }
         
     except Exception as e:
