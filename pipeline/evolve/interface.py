@@ -41,6 +41,11 @@ async def gen(context: str) -> Tuple[str, str]:
                 input = Planner_input(context)
                 plan = await log_agent_run("planner", planner, input)
             else:
+                if repeated_result is None:
+                    input = Planner_input(context)
+                    plan = await log_agent_run("planner", planner, input)
+                    name, motivation = plan.final_output.name, plan.final_output.motivation
+                    return name, motivation
                 repeated_context = await get_repeated_context(repeated_result.repeated_index)
                 input = Deduplication_input(context, repeated_context)
                 plan = await log_agent_run("deduplication", deduplication, input)
@@ -48,6 +53,13 @@ async def gen(context: str) -> Tuple[str, str]:
             name, motivation = plan.final_output.name, plan.final_output.motivation
             
             repeated_result = await check_repeated_motivation(motivation)
+                        
+            # ADD NULL CHECK HERE - This is the critical fix
+            if repeated_result is None:
+                print(f"Attempt {attempt + 1}: Motivation checker returned None, treating as not repeated")
+                print(f"Generated motivation: {motivation}")
+                return name, motivation
+            
             if repeated_result.is_repeated:
                 print(f"Attempt {attempt + 1}: Motivation repeated, index is {repeated_result.repeated_index}")
                 if attempt == Config.MAX_RETRY_ATTEMPTS - 1:
@@ -94,12 +106,16 @@ async def check_code_correctness(motivation) -> bool:
             return False
 
 async def check_repeated_motivation(motivation: str):
-    client = create_client()
-    similar_elements = client.search_similar_motivations(motivation)
-    context = similar_motivation_context(similar_elements)
-    input = Motivation_checker_input(context, motivation)
-    repeated_result = await log_agent_run("motivation_checker", motivation_checker, input)
-    return repeated_result.final_output
+    try:
+        client = create_client()
+        similar_elements = client.search_similar_motivations(motivation)
+        context = similar_motivation_context(similar_elements)
+        input = Motivation_checker_input(context, motivation)
+        repeated_result = await log_agent_run("motivation_checker", motivation_checker, input)
+        return repeated_result.final_output if repeated_result else None
+    except Exception as e:
+        print(f"Error in check_repeated_motivation: {e}")
+        return None
 
 
 def similar_motivation_context(similar_elements: list) -> str:
