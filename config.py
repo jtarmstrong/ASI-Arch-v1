@@ -3,20 +3,20 @@ import os
 class Config:
     """Configuration settings for the experiment."""
     # Target file
-    SOURCE_FILE: str = "programs/generated_program.py"
+    SOURCE_FILE: str = "../programs/generated_program.py"
     
     # Training script
-    BASH_SCRIPT: str = "bash scripts/train.sh"
+    BASH_SCRIPT: str = "bash ../scripts/train.sh"
     
     # Experiment results
-    RESULT_FILE: str = "./files/analysis/loss.csv"
-    RESULT_FILE_TEST: str = "./files/analysis/benchmark.csv"
+    RESULT_FILE: str = "../files/analysis/loss.csv"
+    RESULT_FILE_TEST: str = "../files/analysis/benchmark.csv"
     
     # Debug file
-    DEBUG_FILE: str = "./files/debug/training_error.txt"
+    DEBUG_FILE: str = "../files/debug/training_error.txt"
     
     # Code pool directory
-    CODE_POOL: str = "./pool"
+    CODE_POOL: str = "../pool"
     
     # Maximum number of debug attempts
     MAX_DEBUG_ATTEMPT: int = 3
