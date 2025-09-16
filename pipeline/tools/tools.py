@@ -141,16 +141,18 @@ def read_csv_file(file_path: str) -> Dict[str, Any]:
         }
 
 @function_tool
-def write_code_file(content: str, program_name: str = None) -> Dict[str, Any]:
-    """Write content to a code file."""
-    if program_name:
-        # Handle potential double .py extension
-        if program_name.endswith('.py'):
-            source_file = f"programs/{program_name}"
-        else:
-            source_file = f"programs/{program_name}.py"
+def write_code_file(program_name: str, content: str) -> Dict[str, Any]:
+    """Write content to a code file.
+    
+    Args:
+        program_name: Name of the program file (without .py extension)
+        content: Python code content to write
+    """
+    # Handle potential double .py extension
+    if program_name.endswith('.py'):
+        source_file = f"programs/{program_name}"
     else:
-        source_file = Config.SOURCE_FILE
+        source_file = f"programs/{program_name}.py"
     
     try:
         # Clean markdown artifacts from content
@@ -161,10 +163,21 @@ def write_code_file(content: str, program_name: str = None) -> Dict[str, Any]:
         
         with open(source_file, 'w') as f:
             f.write(cleaned_content)
-        return {
-            'success': True,
-            'message': f'Successfully wrote to {source_file}'
-        }
+            
+        # Verify file was written successfully
+        if os.path.exists(source_file) and os.path.getsize(source_file) > 0:
+            return {
+                'success': True,
+                'message': f'Successfully wrote to {source_file}',
+                'file_path': source_file,
+                'file_size': os.path.getsize(source_file)
+            }
+        else:
+            return {
+                'success': False,
+                'error': f'File {source_file} was not created or is empty'
+            }
+            
     except Exception as e:
         return {
             'success': False,
